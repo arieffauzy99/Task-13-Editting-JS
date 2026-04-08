@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tugas JS Part 2 - CRUD LocalStorage</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 50px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { text-align: center; color: #333; margin-bottom: 25px; }
+        .form-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+        input[type="text"]:focus { border-color: #28a745; }
+        button { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-add { background-color: #28a745; color: white; }
+        .btn-add:hover { background-color: #218838; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #eee; color: #666; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .btn-edit { background-color: #ffc107; color: #333; margin-right: 5px; }
+        .btn-delete { background-color: #dc3545; color: white; }
+        .btn-edit:hover { opacity: 0.8; }
+        .btn-delete:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Daftar Pengguna</h2>
+
+    <form id="mainForm" class="form-group">
+        <input type="hidden" id="userId"> <input type="text" id="userName" placeholder="Ketik nama di sini..." required>
+        <button type="submit" id="submitBtn" class="btn-add">Tambah Data</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nama</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    /**
+     * POIN: Simpan data dummy ke dalam localStorage (Nilai +)
+     * Ketika membuka web, baca localStorage.
+     */
+    let dummyData = JSON.parse(localStorage.getItem('my_local_data')) || [];
+
+    const form = document.getElementById('mainForm');
+    const inputNama = document.getElementById('userName');
+    const inputId = document.getElementById('userId');
+    const tableBody = document.getElementById('userTableBody');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // --- FUNGSI TAMPIL DATA (AKSI MELIHAT) ---
+    function renderData() {
+        tableBody.innerHTML = '';
+        
+        dummyData.forEach(item => {
+            const row = `<tr>
+                <td>${item.nama}</td>
+                <td>
+                    <button class="btn-edit" onclick="prepareEdit(${item.id})">Edit</button>
+                    <button class="btn-delete" onclick="deleteProcess(${item.id})">Hapus</button>
+                </td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+
+        // POIN: Simpan Data ke dalam localStorage setiap ada perubahan
+        localStorage.setItem('my_local_data', JSON.stringify(dummyData));
+    }
+
+    // --- FUNGSI TAMBAH & EDIT ---
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const idValue = inputId.value;
+        const namaValue = inputNama.value;
+
+        if (idValue) {
+            /** * POIN: Terapkan edit pada data dummy
+             * Terapkan function filter berdasarkan BUKAN id yang dipilih.
+             */
+            dummyData = dummyData.filter(item => item.id != idValue);
+            
+            // Simpan kembali data yang sudah diupdate (menggunakan ID yang sama)
+            dummyData.push({ id: parseInt(idValue), nama: namaValue });
+        } else {
+            /**
+             * AKSI MEMBUAT: Tambah data baru
+             */
+            const newData = {
+                id: Date.now(), // Generate ID unik
+                nama: namaValue
+            };
+            dummyData.push(newData);
+        }
+
+        // Reset form
+        resetForm();
+        renderData();
+    });
+
+    // --- FUNGSI AMBIL DATA UNTUK DIEDIT ---
+    window.prepareEdit = (id) => {
+        /**
+         * POIN: Ambil data yang akan diedit & Masukkan ke input form
+         */
+        const selectedData = dummyData.find(item => item.id === id);
+        if (selectedData) {
+            inputNama.value = selectedData.nama;
+            inputId.value = selectedData.id;
+            submitBtn.innerText = "Update Data";
+            submitBtn.style.backgroundColor = "#ffc107";
+            submitBtn.style.color = "#333";
+        }
+    };
+
+    // --- FUNGSI DELETE ---
+    window.deleteProcess = (id) => {
+        if (confirm("Apakah anda yakin ingin menghapus data ini?")) {
+            /**
+             * POIN: Terapkan function filter berdasarkan id yang dipilih (untuk dihapus)
+             */
+            dummyData = dummyData.filter(item => item.id !== id);
+            
+            // POIN: Simpan Data ke data dummy/localStorage
+            renderData();
+        }
+    };
+
+    function resetForm() {
+        inputNama.value = '';
+        inputId.value = '';
+        submitBtn.innerText = "Tambah Data";
+        submitBtn.style.backgroundColor = "#28a745";
+        submitBtn.style.color = "white";
+    }
+
+    // Jalankan render saat pertama kali web dibuka
+    renderData();
+
+</script>
+
+</body>
+</html>
